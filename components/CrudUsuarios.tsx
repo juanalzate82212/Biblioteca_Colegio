@@ -1,9 +1,11 @@
 'use client';
 import { useState, useEffect } from 'react';
+import FormularioUsuario from './FormularioUsuario';
 
 export default function CrudUsuarios() {
   const [usuarios, setUsuarios] = useState([]);
   const [cargando, setCargando] = useState(true);
+  const [mostrandoFormulario, setMostrandoFormulario] = useState(false);
 
   // 1. Cargar usuarios desde la API (MySQL)
   const obtenerUsuarios = async () => {
@@ -36,10 +38,17 @@ export default function CrudUsuarios() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-gray-700">Listado de Usuarios</h2>
-        <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+        <button onClick={() => setMostrandoFormulario(true)} className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
           + Nuevo Usuario
         </button>
       </div>
+
+      {mostrandoFormulario && (
+        <FormularioUsuario 
+          onUsuarioCreado={obtenerUsuarios} 
+          alCerrar={() => setMostrandoFormulario(false)} 
+        />
+      )}
 
       <div className="overflow-x-auto border rounded-lg">
         <table className="min-w-full divide-y divide-gray-200">

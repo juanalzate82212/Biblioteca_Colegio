@@ -1,9 +1,11 @@
 'use client';
 import { useState, useEffect } from 'react';
+import FormularioAutor from './FormularioAutor';
 
 export default function CrudAutores() {
   const [autores, setAutores] = useState([]);
   const [cargando, setCargando] = useState(true);
+  const [mostrandoFormulario, setMostrandoFormulario] = useState(false);
 
   // 1. Cargar autores desde la API (MySQL)
   const obtenerAutores = async () => {
@@ -36,10 +38,17 @@ export default function CrudAutores() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-gray-700">Listado de Autores</h2>
-        <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+        <button onClick={() => setMostrandoFormulario(true)} className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
           + Nuevo Autor
         </button>
       </div>
+
+      {mostrandoFormulario && (
+        <FormularioAutor 
+          onAutorCreado={obtenerAutores} 
+          alCerrar={() => setMostrandoFormulario(false)} 
+        />
+      )}
 
       <div className="overflow-x-auto border rounded-lg">
         <table className="min-w-full divide-y divide-gray-200">

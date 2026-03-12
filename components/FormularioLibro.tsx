@@ -1,7 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
 
-export default function FormularioLibro({ onLibroCreado, alCerrar }: any) {
+export default function FormularioLibro({
+  onLibroCreado,
+  alCerrar,
+  libroAEditar = null,
+}: any) {
   const [autores, setAutores] = useState([]);
   const [formData, setFormData] = useState({
     isbn: "",
@@ -19,82 +23,116 @@ export default function FormularioLibro({ onLibroCreado, alCerrar }: any) {
       .catch((err) => console.error("Error al cargar autores:", err));
   }, []);
 
+  useEffect(() => {
+    if (libroAEditar) {
+      setFormData({
+        isbn: libroAEditar.isbn,
+        titulo: libroAEditar.titulo,
+        editorial: libroAEditar.editorial,
+        genero: libroAEditar.genero,
+        anio_publicacion: libroAEditar.anio_publicacion,
+        autor_cedula: libroAEditar.autor_cedula,
+      });
+    }
+  }, [libroAEditar]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const res = await fetch("/api/libros", {
-      method: "POST",
+    const url = libroAEditar ? `/api/libros/${libroAEditar.isbn}` : "/api/libros";
+    const metodo = libroAEditar ? "PUT" : "POST";
+
+    const res = await fetch(url, {
+      method: metodo,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData),
     });
 
     if (res.ok) {
-      alert("Libro creado con éxito");
+      alert(libroAEditar ? "Libro actualizado exitosamente" : "Libro creado exitosamente");
       onLibroCreado(); // Esta función recargará la lista en el componente padre
       alCerrar(); // Cierra el formulario
     } else {
-      alert("Error al crear libro");
+      alert(libroAEditar ? "Error al actualizar el libro" : "Error al crear el libro");
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 flex items-center justify-center p-4">
       <form
         onSubmit={handleSubmit}
-        className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md"
+        className="bg-gray-200 p-6 rounded-xl shadow-lg w-full max-w-md border-black border-2"
       >
-        <h2 className="text-xl font-bold mb-4">Registrar Nuevo Libro</h2>
+        <h2 className="text-xl font-bold mb-4 text-black">
+          {libroAEditar ? "Editar Libro" : "Registrar Nuevo Libro"}
+        </h2>
 
-        <label className="block mb-2 text-sm font-medium">ISBN</label>
+        <label className="block mb-2 text-sm font-medium text-black">
+          ISBN
+        </label>
         <input
           type="text"
+          value={formData.isbn}
           required
-          className="w-full p-2 mb-4 border rounded"
+          className="w-full p-2 mb-4 border rounded text-black"
           onChange={(e) => setFormData({ ...formData, isbn: e.target.value })}
         />
 
-        <label className="block mb-2 text-sm font-medium">Título</label>
+        <label className="block mb-2 text-sm font-medium text-black">
+          Título
+        </label>
         <input
           type="text"
+          value={formData.titulo}
           required
-          className="w-full p-2 mb-4 border rounded"
+          className="w-full p-2 mb-4 border rounded text-black"
           onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
         />
 
-        <label className="block mb-2 text-sm font-medium">Editorial</label>
+        <label className="block mb-2 text-sm font-medium text-black">
+          Editorial
+        </label>
         <input
           type="text"
+          value={formData.editorial}
           required
-          className="w-full p-2 mb-4 border rounded"
+          className="w-full p-2 mb-4 border rounded text-black"
           onChange={(e) =>
             setFormData({ ...formData, editorial: e.target.value })
           }
         />
 
-        <label className="block mb-2 text-sm font-medium">Género</label>
+        <label className="block mb-2 text-sm font-medium text-black">
+          Género
+        </label>
         <input
           type="text"
+          value={formData.genero}
           required
-          className="w-full p-2 mb-4 border rounded"
+          className="w-full p-2 mb-4 border rounded text-black"
           onChange={(e) => setFormData({ ...formData, genero: e.target.value })}
         />
 
-        <label className="block mb-2 text-sm font-medium">
+        <label className="block mb-2 text-sm font-medium text-black">
           Año de Publicación
         </label>
         <input
           type="number"
+          value={formData.anio_publicacion}
           required
-          className="w-full p-2 mb-4 border rounded"
+          className="w-full p-2 mb-4 border rounded text-black"
           onChange={(e) =>
             setFormData({ ...formData, anio_publicacion: e.target.value })
           }
         />
 
-        <label className="block mb-2 text-sm font-medium">Autor</label>
+        <label className="block mb-2 text-sm font-medium text-black">
+          Autor
+        </label>
         <select
           required
-          className="w-full p-2 mb-4 border rounded"
+          value={formData.autor_cedula}
+          className="w-full p-2 mb-4 border rounded text-black"
           onChange={(e) =>
             setFormData({ ...formData, autor_cedula: e.target.value })
           }

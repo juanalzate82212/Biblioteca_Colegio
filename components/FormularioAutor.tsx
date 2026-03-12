@@ -1,60 +1,76 @@
 "use client";
 import { useState, useEffect } from "react";
 
-export default function FormularioAutor({ onAutorCreado, alCerrar }: any) {
+export default function FormularioAutor({ onAutorCreado, alCerrar, autorAEditar = null }: any) {
   const [cedula, setCedula] = useState("");
   const [nombre, setNombre] = useState("");
   const [nacionalidad, setNacionalidad] = useState("empleado");
 
+  useEffect(() => {
+    if (autorAEditar) {
+      setCedula(autorAEditar.cedula);
+      setNombre(autorAEditar.nombre_completo);
+      setNacionalidad(autorAEditar.nacionalidad);
+    }
+  }, [autorAEditar]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const res = await fetch("/api/autores", {
-      method: "POST",
+    const url = autorAEditar ? `/api/autores/${autorAEditar.cedula}` : "/api/autores";
+    const metodo = autorAEditar ? "PUT" : "POST";
+
+    const res = await fetch(url, {
+      method: metodo,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ cedula, nombre_completo: nombre, nacionalidad }),
     });
 
     if (res.ok) {
-      alert("Autor creado con éxito");
+      alert(autorAEditar ? "Autor actualizado con éxito" : "Autor creado con éxito");
       onAutorCreado(); // Esta función recargará la lista en el componente padre
       alCerrar(); // Cierra el formulario
     } else {
-      alert("Error al crear autor");
+      alert(autorAEditar ? "Error al actualizar autor" : "Error al crear autor");
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 flex items-center justify-center p-4">
       <form
         onSubmit={handleSubmit}
-        className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md"
+        className="bg-gray-200 p-6 rounded-xl shadow-lg w-full max-w-md border-black border-2"
       >
-        <h2 className="text-xl font-bold mb-4">Registrar Nuevo Autor</h2>
+        <h2 className="text-xl font-bold mb-4 text-black">
+          {autorAEditar ? "Editar Autor" : "Registrar Nuevo Autor"}
+        </h2>
 
-        <label className="block mb-2 text-sm font-medium">Cédula</label>
+        <label className="block mb-2 text-sm font-medium text-black">Cédula</label>
         <input
           type="text"
+          value={cedula}
           required
-          className="w-full p-2 mb-4 border rounded"
+          className="w-full p-2 mb-4 border rounded text-black"
           onChange={(e) => setCedula(e.target.value)}
         />
 
-        <label className="block mb-2 text-sm font-medium">
+        <label className="block mb-2 text-sm font-medium text-black">
           Nombre Completo
         </label>
         <input
           type="text"
+          value={nombre}
           required
-          className="w-full p-2 mb-4 border rounded"
+          className="w-full p-2 mb-4 border rounded text-black"
           onChange={(e) => setNombre(e.target.value)}
         />
 
-        <label className="block mb-2 text-sm font-medium">Nacionalidad</label>
+        <label className="block mb-2 text-sm font-medium text-black">Nacionalidad</label>
         <input
           type="text"
+          value={nacionalidad}
           required
-          className="w-full p-2 mb-4 border rounded"
+          className="w-full p-2 mb-4 border rounded text-black"
           onChange={(e) => setNacionalidad(e.target.value)}
         />
 

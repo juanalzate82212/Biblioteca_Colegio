@@ -6,6 +6,7 @@ export default function CrudLibros() {
   const [libros, setLibros] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [mostrandoFormulario, setMostrandoFormulario] = useState(false);
+  const [libroEnEdicion, setLibroEnEdicion] = useState(null);
 
   // 1. Cargar libros desde la API (MySQL)
   const obtenerLibros = async () => {
@@ -48,10 +49,14 @@ export default function CrudLibros() {
         </button>
       </div>
 
-      {mostrandoFormulario && (
+      {(mostrandoFormulario || libroEnEdicion) && (
         <FormularioLibro
+          libroAEditar={libroEnEdicion}
+          alCerrar={() => {
+            setMostrandoFormulario(false);
+            setLibroEnEdicion(null);
+          }}
           onLibroCreado={obtenerLibros}
-          alCerrar={() => setMostrandoFormulario(false)}
         />
       )}
 
@@ -101,7 +106,12 @@ export default function CrudLibros() {
                   {u.nombre_autor} ({u.autor_cedula})
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <button className="text-indigo-600 hover:text-indigo-900 mr-4">
+                  <button
+                    onClick={() => {
+                      setLibroEnEdicion(u);
+                    }}
+                    className="text-indigo-600 hover:text-indigo-900 mr-4"
+                  >
                     Editar
                   </button>
                   <button

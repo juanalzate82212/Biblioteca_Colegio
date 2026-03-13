@@ -24,9 +24,9 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Contraseña incorrecta" }, { status: 401 });
         }
 
-        const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'llave_secreta_123');
+        const secret = new TextEncoder().encode(process.env.JWT_SECRET);
         const token = await new SignJWT({ 
-            id: usuario.id, role: usuario.role })
+            id: usuario.id, role: usuario.tipo })
             .setProtectedHeader({ alg: "HS256" })
             .setExpirationTime("2h")
             .sign(secret);

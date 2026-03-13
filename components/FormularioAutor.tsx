@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 export default function FormularioAutor({ onAutorCreado, alCerrar, autorAEditar = null }: any) {
   const [cedula, setCedula] = useState("");
   const [nombre, setNombre] = useState("");
-  const [nacionalidad, setNacionalidad] = useState("empleado");
+  const [nacionalidad, setNacionalidad] = useState("");
 
   useEffect(() => {
     if (autorAEditar) {

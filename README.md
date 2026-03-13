@@ -2,6 +2,18 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+Create a new file .env y add with your information:
+
+```bash
+DATABASE_HOST=
+DATABASE_USER=
+DATABASE_PASSWORD=
+DATABASE_NAME=
+PORT=
+JWT_SECRET=
+JWT_EXPIRES_IN=
+```
+
 First, run the development server:
 
 ```bash

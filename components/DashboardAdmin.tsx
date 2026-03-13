@@ -1,4 +1,5 @@
 "use client";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import CrudUsuarios from "./CrudUsuarios";
 import CrudAutores from "./CrudAutores";
@@ -8,6 +9,13 @@ export default function DashboardAdmin() {
   const [seccion, setSeccion] = useState<"usuarios" | "autores" | "libros">(
     "autores",
   );
+  const router = useRouter();
+  const cerrarSesion = () => {
+    document.cookie = "mi-token-biblioteca=; path=/; max-age=0";
+    localStorage.clear();
+    router.replace("/");
+    router.refresh();
+  };
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -36,7 +44,10 @@ export default function DashboardAdmin() {
           </button>
         </nav>
         <div className="p-4 border-t border-indigo-800">
-          <button className="w-full text-left p-3 text-red-300 hover:text-red-100">
+          <button 
+            onClick={cerrarSesion}
+            className="w-full text-left p-3 text-red-300 hover:text-red-100"
+          >
             Cerrar Sesión
           </button>
         </div>

@@ -1,0 +1,59 @@
+@startuml entidades_api
+
+title Diagrama de Clases para Entidades y API del Backend
+
+class Usuario {
+    + id: int
+    + nickname: string
+    + password: string
+    + tipo: enum
+    --
+    GET /api/usuarios
+    POST /api/usuarios
+    PUT /api/usuarios/{id}
+    DELETE /api/usuarios/{id}
+}
+
+class Libro {
+    + isbn: string
+    + titulo: string
+    + editorial: string
+    + genero: string
+    + año_publicacion: int
+    + autor_cedula: string
+    --
+    GET /api/libros
+    POST /api/libros
+    PUT /api/libros/{isbn}
+    DELETE /api/libros/{isbn}
+}
+
+class Autor {
+    + cedula: int
+    + nombre: string
+    + nacionalidad: string
+    --
+    GET /api/autores
+    POST /api/autores
+    PUT /api/autores/{cedula}
+    DELETE /api/autores/{cedula}
+}
+
+class Login <<Route Handler>> {
+    + POST /api/login
+    --
+    - verificarPassword(): boolean
+    - generarJWT(id, tipo): string
+    - guardarEnCookie(token): void
+}
+
+interface JWTPayload {
+    + id: int
+    + tipo: string
+    + Date exp
+}
+
+Libro "muchos" -- "1" Autor : tiene
+Login --> JWTPayload : genera
+Login --> Usuario : verifica
+@enduml

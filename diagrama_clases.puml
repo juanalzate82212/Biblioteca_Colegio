@@ -1,0 +1,94 @@
+@startuml diagrama_clases
+
+title Diagrama de Clases para Componentes del Frontend
+
+class Login <<page: />>{
+    - nickname: string
+    - password: string
+    + manejarLogin(e: FormEvent): void
+    + guardartokenEnCookie(token: string): void
+    + redirigirSegunTipo(tipo: string): void
+}
+
+class DashboardAdmin <<page: /dashboard-admin>> {
+    - seccion: "CRUD Autores" | "CRUD Libros" | "CRUD Usuarios"
+    + cerrarSesion(): void
+    + renderizarSeccion(): Component
+}
+
+class ReporteUsuario <<page: /reporte-usuario>> {
+    + cerrarSesion(): void
+    + renderizarReporte(): Component
+}
+
+class CrudAutores {
+    - autores: Autor[]
+    - cargando: boolean
+    - mostrarFormulario: boolean
+    - autorEnEdicion: Autor | null
+    + crearAutor(): void
+    + editarAutor(): void
+    + eliminarAutor(): void
+    + listarAutores(): void
+}
+
+class CrudLibros {
+    - libros: Libro[]
+    - cargando: boolean
+    - mostrarFormulario: boolean
+    - libroEnEdicion: Libro | null
+    + crearLibro(): void
+    + editarLibro(): void
+    + eliminarLibro(): void
+    + listarLibros(): void
+}
+
+class CrudUsuarios {
+    - usuarios: Usuario[]
+    - cargando: boolean
+    - mostrarFormulario: boolean
+    - usuarioEnEdicion: Usuario | null
+    + crearUsuario(): void
+    + editarUsuario(): void
+    + eliminarUsuario(): void
+    + listarUsuarios(): void
+}
+
+class FormularioAutor {
+    - cedula: string
+    - nombre_completo: string
+    - nacionalidad: string
+    + handleSubmit(e: FormEvent): void
+}
+
+class FormularioLibro {
+    - formData: FormData
+    - autores: Autor[]
+    + handleSubmit(e: FormEvent): void
+}
+
+class FormularioUsuario {
+    - nickname: string
+    - password: string
+    - tipo: string
+    + handleSubmit(e: FormEvent): void
+}
+
+class LibrosDeAutor {
+    - autores: Autor[]
+    - libros: Libro[]
+    - cedulaSeleccionada: string
+    - cargando: boolean
+    + seleccionarAutor(cedula: string): void
+}
+
+Login "redirige si es administrador" --> DashboardAdmin
+Login "redirige si es empleado" --> ReporteUsuario
+DashboardAdmin *-- CrudAutores : renderiza
+DashboardAdmin *-- CrudLibros : renderiza
+DashboardAdmin *-- CrudUsuarios : renderiza
+CrudAutores *-- FormularioAutor : utiliza
+CrudLibros *-- FormularioLibro : utiliza
+CrudUsuarios *-- FormularioUsuario : utiliza
+ReporteUsuario *-- LibrosDeAutor : renderiza
+@enduml

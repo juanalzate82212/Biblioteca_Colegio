@@ -1,39 +1,55 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery, useMutation } from "@apollo/client/react"; 
+import { gql } from 'graphql-tag';
 import FormularioUsuario from "./FormularioUsuario";
 
+const GET_USUARIOS = gql`
+  query {
+    usuarios {
+      id
+      nickname
+      tipo
+    }
+  }
+`
+
+const ELIMINAR_USUARIO = gql`
+  mutation EliminarUsuario($id: Int!) {
+    eliminarUsuario(id: $id)
+  }
+`
+
+interface Usuario {
+  id: number
+  nickname: string
+  tipo: 'administrador' | 'empleado'
+}
+
+interface QueryUsuarios {
+  usuarios: Usuario[]
+}
+
 export default function CrudUsuarios() {
-  const [usuarios, setUsuarios] = useState([]);
-  const [cargando, setCargando] = useState(true);
   const [mostrandoFormulario, setMostrandoFormulario] = useState(false);
-  const [usuarioEnEdicion, setUsuarioEnEdicion] = useState(null);
+  const [usuarioEnEdicion, setUsuarioEnEdicion] = useState<Usuario | null>(null);
 
-  // 1. Cargar usuarios desde la API (MySQL)
-  const obtenerUsuarios = async () => {
-    try {
-      const res = await fetch("/api/usuarios");
-      const data = await res.json();
-      setUsuarios(data);
-    } catch (error) {
-      console.error("Error cargando usuarios:", error);
-    } finally {
-      setCargando(false);
+  const { data, loading, error, refetch } = useQuery<QueryUsuarios>(GET_USUARIOS)
+
+  const [eliminarUsuario] = useMutation(ELIMINAR_USUARIO, {
+    onCompleted: () => refetch(),
+  })
+
+  const handleEliminar = async (id: number) => {
+    if (confirm('¿Estás seguro de eliminar este usuario?')) {
+      await eliminarUsuario({ variables: { id } })
     }
-  };
+  }
 
-  useEffect(() => {
-    obtenerUsuarios();
-  }, []);
+  if (loading) return <p>Cargando usuarios...</p>
+  if (error) return <p>Error cargando usuarios: {error.message}</p>
 
-  // 2. Función para eliminar
-  const eliminarUsuario = async (id: number) => {
-    if (confirm("¿Estás seguro de eliminar este usuario?")) {
-      await fetch(`/api/usuarios/${id}`, { method: "DELETE" });
-      obtenerUsuarios(); // Recargamos la lista
-    }
-  };
-
-  if (cargando) return <p>Cargando usuarios...</p>;
+  const usuarios: Usuario[] = data?.usuarios ?? []
 
   return (
     <div className="space-y-6">
@@ -56,7 +72,8 @@ export default function CrudUsuarios() {
             setMostrandoFormulario(false);
             setUsuarioEnEdicion(null);
           }}
-          onUsuarioCreado={obtenerUsuarios}
+          // onUsuarioCreado={obtenerUsuarios}
+          onUsuarioCreado={refetch}
         />
       )}
 
@@ -79,7 +96,7 @@ export default function CrudUsuarios() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {usuarios.map((u: any) => (
+            {usuarios.map((u) => (
               <tr key={u.id}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {u.id}
@@ -103,7 +120,7 @@ export default function CrudUsuarios() {
                     Editar
                   </button>
                   <button
-                    onClick={() => eliminarUsuario(u.id)}
+                    onClick={() => handleEliminar(u.id)}
                     className="text-red-600 hover:text-red-900"
                   >
                     Eliminar

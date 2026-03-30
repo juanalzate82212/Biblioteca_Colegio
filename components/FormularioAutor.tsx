@@ -1,7 +1,39 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useMutation } from "@apollo/client/react";
+import { gql } from 'graphql-tag'
 
-export default function FormularioAutor({ onAutorCreado, alCerrar, autorAEditar = null }: any) {
+const CREAR_AUTOR = gql`
+  mutation CrearAutor($cedula: String!, $nombre_completo: String!, $nacionalidad: String!) {
+    crearAutor(cedula: $cedula, nombre_completo: $nombre_completo, nacionalidad: $nacionalidad) {
+      cedula
+      nombre_completo
+    }
+  }
+`
+
+const ACTUALIZAR_AUTOR = gql`
+  mutation ActualizarAutor($cedula: String!, $nombre_completo: String, $nacionalidad: String) {
+    actualizarAutor(cedula: $cedula, nombre_completo: $nombre_completo, nacionalidad: $nacionalidad) {
+      cedula
+      nombre_completo
+    }
+  }
+`
+
+interface Autor {
+  cedula: string
+  nombre_completo: string
+  nacionalidad: string
+}
+
+interface Props {
+  onAutorCreado: () => void
+  alCerrar: () => void
+  autorAEditar?: Autor | null
+}
+
+export default function FormularioAutor({ onAutorCreado, alCerrar, autorAEditar = null }: Props) {
   const [cedula, setCedula] = useState("");
   const [nombre, setNombre] = useState("");
   const [nacionalidad, setNacionalidad] = useState("");
@@ -14,24 +46,29 @@ export default function FormularioAutor({ onAutorCreado, alCerrar, autorAEditar 
     }
   }, [autorAEditar]);
 
+  const [crearAutor] = useMutation(CREAR_AUTOR);
+  const [actualizarAutor] = useMutation(ACTUALIZAR_AUTOR);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const url = autorAEditar ? `/api/autores/${autorAEditar.cedula}` : "/api/autores";
-    const metodo = autorAEditar ? "PUT" : "POST";
-
-    const res = await fetch(url, {
-      method: metodo,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ cedula, nombre_completo: nombre, nacionalidad }),
-    });
-
-    if (res.ok) {
-      alert(autorAEditar ? "Autor actualizado con éxito" : "Autor creado con éxito");
-      onAutorCreado(); // Esta función recargará la lista en el componente padre
-      alCerrar(); // Cierra el formulario
-    } else {
-      alert(autorAEditar ? "Error al actualizar autor" : "Error al crear autor");
+    try {
+      if (autorAEditar) {
+        await actualizarAutor({
+          variables: { cedula, nombre_completo: nombre, nacionalidad },
+        })
+        alert('Autor actualizado con éxito')
+      } else {
+        await crearAutor({
+          variables: { cedula, nombre_completo: nombre, nacionalidad },
+        })
+        alert('Autor creado con éxito')
+      }
+      onAutorCreado()
+      alCerrar()
+    } catch (error) {
+      alert(autorAEditar ? 'Error al actualizar autor' : 'Error al crear autor')
+      console.error(error)
     }
   };
 
@@ -50,6 +87,7 @@ export default function FormularioAutor({ onAutorCreado, alCerrar, autorAEditar 
           type="text"
           value={cedula}
           required
+          disabled={!!autorAEditar}
           className="w-full p-2 mb-4 border rounded text-black"
           onChange={(e) => setCedula(e.target.value)}
         />

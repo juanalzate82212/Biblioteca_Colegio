@@ -1,13 +1,74 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useMutation, useQuery } from '@apollo/client/react';
+import { gql } from 'graphql-tag'
+
+const GET_AUTORES = gql`
+  query {
+    autores {
+      cedula
+      nombre_completo
+    }
+}
+`
+
+const CREAR_LIBRO = gql`
+  mutation CrearLibro($isbn: String!, $titulo: String!, $editorial: String!, $genero: String!, $anio_publicacion: Int!, $autor_cedula: String!) {
+    crearLibro(isbn: $isbn, titulo: $titulo, editorial: $editorial, genero: $genero, anio_publicacion: $anio_publicacion, autor_cedula: $autor_cedula) {
+      isbn
+      titulo
+    }
+  }
+`
+
+const ACTUALIZAR_LIBRO = gql`
+  mutation ActualizarLibro($isbn: String!, $titulo: String, $editorial: String, $genero: String, $anio_publicacion: Int) {
+    actualizarLibro(isbn: $isbn, titulo: $titulo, editorial: $editorial, genero: $genero, anio_publicacion: $anio_publicacion) {
+      isbn
+      titulo
+    }
+  }
+`
+
+interface Autor {
+  cedula: string
+  nombre_completo: string
+}
+
+interface QueryAutores {
+  autores: Autor[]
+}
+
+interface Libro {
+  isbn: string
+  titulo: string
+  editorial: string
+  genero: string
+  anio_publicacion: number
+  autor: Autor
+}
+
+interface Props {
+  onLibroCreado: () => void
+  alCerrar: () => void
+  libroAEditar?: Libro | null
+}
+
+interface FormData {
+  isbn: string
+  titulo: string
+  editorial: string
+  genero: string
+  anio_publicacion: string
+  autor_cedula: string
+}
 
 export default function FormularioLibro({
   onLibroCreado,
   alCerrar,
   libroAEditar = null,
-}: any) {
-  const [autores, setAutores] = useState([]);
-  const [formData, setFormData] = useState({
+}: Props) {
+  const [formData, setFormData] = useState<FormData>({
     isbn: "",
     titulo: "",
     editorial: "",
@@ -16,12 +77,8 @@ export default function FormularioLibro({
     autor_cedula: "",
   });
 
-  useEffect(() => {
-    fetch("/api/autores")
-      .then((res) => res.json())
-      .then((data) => setAutores(data))
-      .catch((err) => console.error("Error al cargar autores:", err));
-  }, []);
+  const { data: dataAutores } = useQuery<QueryAutores>(GET_AUTORES)
+  const autores: Autor[] = dataAutores?.autores ?? []
 
   useEffect(() => {
     if (libroAEditar) {
@@ -30,30 +87,44 @@ export default function FormularioLibro({
         titulo: libroAEditar.titulo,
         editorial: libroAEditar.editorial,
         genero: libroAEditar.genero,
-        anio_publicacion: libroAEditar.anio_publicacion,
-        autor_cedula: libroAEditar.autor_cedula,
+        anio_publicacion: String(libroAEditar.anio_publicacion),
+        autor_cedula: libroAEditar.autor.cedula,
       });
     }
   }, [libroAEditar]);
 
+  const [crearLibro] = useMutation(CREAR_LIBRO)
+  const [actualizarLibro] = useMutation(ACTUALIZAR_LIBRO)
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const url = libroAEditar ? `/api/libros/${libroAEditar.isbn}` : "/api/libros";
-    const metodo = libroAEditar ? "PUT" : "POST";
-
-    const res = await fetch(url, {
-      method: metodo,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    });
-
-    if (res.ok) {
-      alert(libroAEditar ? "Libro actualizado exitosamente" : "Libro creado exitosamente");
-      onLibroCreado(); // Esta función recargará la lista en el componente padre
-      alCerrar(); // Cierra el formulario
-    } else {
-      alert(libroAEditar ? "Error al actualizar el libro" : "Error al crear el libro");
+    try {
+      if (libroAEditar) {
+        await actualizarLibro({
+          variables: { 
+            isbn: formData.isbn,
+            titulo: formData.titulo,
+            editorial: formData.editorial,
+            genero: formData.genero,
+            anio_publicacion: Number(formData.anio_publicacion),
+          },
+        })
+        alert('Libro actualizado correctamente')
+      } else {
+        await crearLibro({
+          variables: {
+            ...formData,
+            anio_publicacion: Number(formData.anio_publicacion),
+          },
+        })
+        alert('Libro creado correctamente')
+      }
+      onLibroCreado()
+      alCerrar()
+    } catch (error) {
+      alert(libroAEditar ? 'Error al actualizar el libro' : 'Error al crear el libro')
+      console.error(error)
     }
   };
 
@@ -74,6 +145,7 @@ export default function FormularioLibro({
           type="text"
           value={formData.isbn}
           required
+          disabled={!!libroAEditar}
           className="w-full p-2 mb-4 border rounded text-black"
           onChange={(e) => setFormData({ ...formData, isbn: e.target.value })}
         />
@@ -132,13 +204,14 @@ export default function FormularioLibro({
         <select
           required
           value={formData.autor_cedula}
+          disabled={!!libroAEditar}
           className="w-full p-2 mb-4 border rounded text-black"
           onChange={(e) =>
             setFormData({ ...formData, autor_cedula: e.target.value })
           }
         >
           <option value="">Seleccione un autor</option>
-          {autores.map((autor: any) => (
+          {autores.map((autor) => (
             <option key={autor.cedula} value={autor.cedula}>
               {autor.nombre_completo}
             </option>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Providers from "./providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,7 +15,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Biblioteca del Colegio",
-  description: "Una aplicación para gestionar la biblioteca del colegio, permitiendo a los admins hacer CRUD de libros, autores y usuarios, y a los usuarios consultar libros y autores.",
+  description:
+    "Una aplicación para gestionar la biblioteca del colegio, permitiendo a los admins hacer CRUD de libros, autores y usuarios, y a los usuarios consultar libros y autores.",
 };
 
 export default function RootLayout({
@@ -27,7 +29,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

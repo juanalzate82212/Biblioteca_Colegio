@@ -1,39 +1,55 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery, useMutation } from "@apollo/client/react";
+import { gql } from 'graphql-tag';
 import FormularioAutor from "./FormularioAutor";
 
+const GET_AUTORES = gql`
+  query {
+    autores {
+      cedula
+      nombre_completo
+      nacionalidad
+    }
+  }
+`
+
+const ELIMINAR_AUTOR = gql`
+  mutation EliminarAutor($cedula: String!) {
+    eliminarAutor(cedula: $cedula)
+  }
+`
+
+interface Autor {
+  cedula: string
+  nombre_completo: string
+  nacionalidad: string
+}
+
+interface QueryAutores {
+  autores: Autor[]
+}
+
 export default function CrudAutores() {
-  const [autores, setAutores] = useState([]);
-  const [cargando, setCargando] = useState(true);
   const [mostrandoFormulario, setMostrandoFormulario] = useState(false);
-  const [autorEnEdicion, setAutorEnEdicion] = useState(null);
+  const [autorEnEdicion, setAutorEnEdicion] = useState<Autor | null>(null);
 
-  // 1. Cargar autores desde la API (MySQL)
-  const obtenerAutores = async () => {
-    try {
-      const res = await fetch("/api/autores");
-      const data = await res.json();
-      setAutores(data);
-    } catch (error) {
-      console.error("Error cargando autores:", error);
-    } finally {
-      setCargando(false);
+  const { data, loading, error, refetch } = useQuery<QueryAutores>(GET_AUTORES)
+
+  const [eliminarAutor] = useMutation(ELIMINAR_AUTOR, {
+    onCompleted: () => refetch(),
+  })
+
+  const handleEliminar = async (cedula: string) => {
+    if (confirm('¿Estás seguro de eliminar este autor?')) {
+      await eliminarAutor({ variables: { cedula } })
     }
-  };
+  }
 
-  useEffect(() => {
-    obtenerAutores();
-  }, []);
+  if(loading) return <p>Cargando autores...</p>
+  if(error) return <p>Error cargando autores: {error.message}</p>
 
-  // 2. Función para eliminar
-  const eliminarAutor = async (id: number) => {
-    if (confirm("¿Estás seguro de eliminar este autor?")) {
-      await fetch(`/api/autores/${id}`, { method: "DELETE" });
-      obtenerAutores(); // Recargamos la lista
-    }
-  };
-
-  if (cargando) return <p>Cargando autores...</p>;
+  const autores: Autor[] = data?.autores ?? []
 
   return (
     <div className="space-y-6">
@@ -56,7 +72,7 @@ export default function CrudAutores() {
             setMostrandoFormulario(false);
             setAutorEnEdicion(null);
           }}
-          onAutorCreado={obtenerAutores}
+          onAutorCreado={refetch}
         />
       )}
 
@@ -79,7 +95,7 @@ export default function CrudAutores() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {autores.map((u: any) => (
+            {autores.map((u) => (
               <tr key={u.cedula}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {u.cedula}
@@ -99,7 +115,7 @@ export default function CrudAutores() {
                     Editar
                   </button>
                   <button
-                    onClick={() => eliminarAutor(u.cedula)}
+                    onClick={() => handleEliminar(u.cedula)}
                     className="text-red-600 hover:text-red-900"
                   >
                     Eliminar

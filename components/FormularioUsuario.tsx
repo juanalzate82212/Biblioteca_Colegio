@@ -1,10 +1,43 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useMutation } from '@apollo/client/react';
+import { gql } from 'graphql-tag'
 
-export default function FormularioUsuario({ onUsuarioCreado, alCerrar, usuarioAEditar = null }: any) {
+const CREAR_USUARIO = gql`
+  mutation CrearUsuario($nickname: String!, $password: String!, $tipo: TipoUsuario!) {
+    crearUsuario(nickname: $nickname, password: $password, tipo: $tipo) {
+      id
+      nickname
+      tipo
+    }
+  }
+`
+
+const ACTUALIZAR_USUARIO = gql`
+  mutation ActualizarUsuario($id: Int!, $nickname: String, $tipo: TipoUsuario) {
+    actualizarUsuario(id: $id, nickname: $nickname, tipo: $tipo) {
+      id
+      nickname
+      tipo
+    }
+  }
+`
+interface Usuario {
+  id: number
+  nickname: string
+  tipo: 'administrador' | 'empleado'
+}
+
+interface Props {
+  onUsuarioCreado: () => void
+  alCerrar: () => void
+  usuarioAEditar?: Usuario | null
+}
+
+export default function FormularioUsuario({ onUsuarioCreado, alCerrar, usuarioAEditar = null }: Props) {
   const [nickname, setNickname] = useState('');
   const [password, setPassword] = useState('');
-  const [tipo, setTipo] = useState('empleado');
+  const [tipo, setTipo] = useState<'administrador' | 'empleado'>('empleado');
 
   useEffect(() => {
     if (usuarioAEditar) {
@@ -13,24 +46,28 @@ export default function FormularioUsuario({ onUsuarioCreado, alCerrar, usuarioAE
     }
   }, [usuarioAEditar]);
 
+  const [crearUsuario] = useMutation(CREAR_USUARIO)
+  const [actualizarUsuario] = useMutation(ACTUALIZAR_USUARIO)
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    const url = usuarioAEditar ? `/api/usuarios/${usuarioAEditar.id}` : '/api/usuarios';
-    const metodo = usuarioAEditar ? 'PUT' : 'POST';
-
-    const res = await fetch(url, {
-      method: metodo,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nickname, password, tipo }),
-    });
-
-    if (res.ok) {
-      alert(usuarioAEditar ? 'Usuario actualizado exitosamente' : 'Usuario creado exitosamente');
-      onUsuarioCreado(); // Esta función recargará la lista en el componente padre
-      alCerrar();        // Cierra el formulario
-    } else {
-      alert(usuarioAEditar ? 'Error al actualizar el usuario' : 'Error al crear el usuario');
+    try{
+      if (usuarioAEditar) {
+        await actualizarUsuario({
+          variables: { id: usuarioAEditar.id, nickname, tipo },
+        })
+        alert('Usuario actualizado correctamente')
+      } else {
+        await crearUsuario({
+          variables: { nickname, password, tipo },
+        })
+        alert('Usuario creado exitosamente')
+      }
+      onUsuarioCreado()
+      alCerrar()
+    } catch (error) {
+      alert(usuarioAEditar ? 'Error al actualizar el usuario' : 'Error al crear el usuario')
+      console.error(error)
     }
   };
 
@@ -62,7 +99,7 @@ export default function FormularioUsuario({ onUsuarioCreado, alCerrar, usuarioAE
         <select 
           className="w-full p-2 mb-6 border rounded text-black"
           value={tipo}
-          onChange={(e) => setTipo(e.target.value)}
+          onChange={(e) => setTipo(e.target.value as 'administrador' | 'empleado')}
         >
           <option value="empleado">Empleado</option>
           <option value="administrador">Administrador</option>
